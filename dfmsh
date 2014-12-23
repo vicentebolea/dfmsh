@@ -1,0 +1,53 @@
+#!/bin/bash
+
+REPOSITORY="$HOME/.mydotfiles"
+BACKUPDIR="$HOME/.dfmsh-back"
+IGNOREFILE="$REPOSITORY/.dfmshignore"
+
+ignore_file=`cat $IGNOREFILE | xargs`
+ignore_file="$ignore_file .dfmshignore .. ."
+
+function _install () {
+for file in `ls -a $REPOSITORY | xargs`; do
+  file=$(basename $file)
+  [[ $ignore_file =~ $file ]] && continue;
+
+  local file_type=$(file --mime-type -b "$HOME/$file");
+  if [ "$file_type" = "inode/symlink" ]; then
+    continue;
+  else
+    if [ -e "$HOME/$file" ]; then
+      [ -e $BACKUPDIR ] || mkdir $BACKUPDIR
+      mv "$HOME/$file" "$BACKUPDIR/$file"
+    fi
+    ln -s $REPOSITORY/$file $HOME/$file
+    echo $file " INSTALLED."
+  fi
+done
+}
+
+function _uninstall () {
+echo $REPOSITORY
+for file in `ls -a $REPOSITORY | xargs`; do
+  file=$(basename $file)
+  [[ $ignore_file =~ $file ]] && continue;
+
+  local file_type=$(file --mime-type -b "$HOME/$file");
+  if [ "$file_type" = "inode/symlink" ]; then
+    rm "$HOME/$file"
+    echo $file " UNINSTALLED."
+  fi
+
+  if [ -e "$BACKUPDIR/$file" ]; then 
+    mv "$BACKUPDIR/$file" $HOME
+    echo $file " RESTORED."
+  fi
+
+done
+}
+
+case "$1" in
+  install)   _install   ;;
+uninstall) _uninstall ;;
+esac
+# vim: ft=sh

@@ -27,7 +27,6 @@ done
 }
 
 function _uninstall () {
-echo $REPOSITORY
 for file in `ls -a $REPOSITORY | xargs`; do
   file=$(basename $file)
   [[ $ignore_file =~ $file ]] && continue;

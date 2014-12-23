@@ -4,13 +4,11 @@ REPOSITORY="$HOME/.mydotfiles"
 BACKUPDIR="$HOME/.dfmsh-back"
 IGNOREFILE="$REPOSITORY/.dfmshignore"
 
-ignore_file=`cat $IGNOREFILE | xargs`
-ignore_file="$ignore_file .dfmshignore .. ."
 
-function _install () {
-for file in `ls -a $REPOSITORY | xargs`; do
+function _install () 
+{
+for file in $(_list_files); do
   file=$(basename $file)
-  [[ $ignore_file =~ $file ]] && continue;
 
   local file_type=$(file --mime-type -b "$HOME/$file");
   if [ "$file_type" = "inode/symlink" ]; then
@@ -26,27 +24,44 @@ for file in `ls -a $REPOSITORY | xargs`; do
 done
 }
 
-function _uninstall () {
-for file in `ls -a $REPOSITORY | xargs`; do
-  file=$(basename $file)
-  [[ $ignore_file =~ $file ]] && continue;
+function _uninstall () 
+{
+  for file in $(_list_files); do
 
-  local file_type=$(file --mime-type -b "$HOME/$file");
-  if [ "$file_type" = "inode/symlink" ]; then
-    rm "$HOME/$file"
-    echo $file " UNINSTALLED."
-  fi
+    local file_type=$(file --mime-type -b "$HOME/$file");
+    if [ "$file_type" = "inode/symlink" ]; then
+      rm "$HOME/$file"
+      echo $file " UNINSTALLED."
+    fi
 
-  if [ -e "$BACKUPDIR/$file" ]; then 
-    mv "$BACKUPDIR/$file" $HOME
-    echo $file " RESTORED."
-  fi
+    if [ -e "$BACKUPDIR/$file" ]; then 
+      mv "$BACKUPDIR/$file" $HOME
+      echo $file " RESTORED."
+    fi
 
-done
+  done
+}
+
+function _list_files () 
+{
+  local ignore_file=`cat $IGNOREFILE | xargs`
+  local ignore_file="$ignore_file .dfmshignore .. ."
+
+  local files=`ls -a $REPOSITORY | xargs`
+  local final_files=""
+
+  for file in $files; do
+    file=$(basename $file)
+    [[ $ignore_file =~ $file ]] && continue;
+    final_files+=$file
+  done
+  [ "$final_files" = "" ] && echo "No input files" && exit  
+  echo $final_files
 }
 
 case "$1" in
-  install)   _install   ;;
-uninstall) _uninstall ;;
+  install)   _install    ;;
+  uninstall) _uninstall  ;;
+  list)      _list_files ;;
 esac
 # vim: ft=sh

@@ -1,9 +1,17 @@
 #!/bin/bash
+# Author: Vicente Adolfo Bolea Sanchez <vicente,bolea@gmail.com>
+# DFMSH, DFM again written in BASH
+#
+#
+ 
+function find_repository () {
+ if ! [ -z $REPOSITORY ]; then
+  REPOSITORY=`pwd`
+ fi
 
-REPOSITORY="$HOME/.mydotfiles"
-BACKUPDIR="$HOME/.dfmsh-back"
-IGNOREFILE="$REPOSITORY/.dfmshignore"
-
+ BACKUPDIR="$HOME/.dfmsh-back"
+ IGNOREFILE="$REPOSITORY/.dfmshignore"
+}
 
 function _install () 
 {
@@ -44,8 +52,8 @@ function _uninstall ()
 
 function _list_files () 
 {
-  local ignore_file=`cat $IGNOREFILE | xargs`
-  local ignore_file="$ignore_file .dfmshignore .. ."
+  [ -e $IGNOREFILE ] && local ignore_file=`cat $IGNOREFILE | xargs`
+  local ignore_file="$ignore_file README.md .git/ bin/ .dfmshignore .. ."
 
   local files=`ls -a $REPOSITORY | xargs`
   local final_files=""
@@ -53,15 +61,23 @@ function _list_files ()
   for file in $files; do
     file=$(basename $file)
     [[ $ignore_file =~ $file ]] && continue;
-    final_files+=$file
+    final_files+=" "$file
   done
   [ "$final_files" = "" ] && echo "No input files" && exit  
   echo $final_files
 }
 
+find_repository;
+
 case "$1" in
   install)   _install    ;;
   uninstall) _uninstall  ;;
   list)      _list_files ;;
+  *) 
+    printf " Dotfiles Manager BASH\n"
+    printf "  - install, install dotfiles \n"
+    printf "  - uninstall, uninstall dotfiles \n"
+    printf "  - list, list dotfiles which will be un/installed \n"
+    ;;
 esac
 # vim: ft=sh

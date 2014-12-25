@@ -1,0 +1,5 @@
+IGNORED_FILES=(
+ Hola 
+ .hehe
+)
+# vim: ft=sh

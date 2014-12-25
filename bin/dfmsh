@@ -4,11 +4,9 @@
 #
 #
  
-function find_repository () {
- if ! [ -z $REPOSITORY ]; then
-  REPOSITORY=`pwd`
- fi
-
+function find_repository () 
+{
+ [ -z $REPOSITORY ] && REPOSITORY=`pwd`
  BACKUPDIR="$HOME/.dfmsh-back"
  IGNOREFILE="$REPOSITORY/.dfmshignore"
 }
@@ -46,38 +44,40 @@ function _uninstall ()
       mv "$BACKUPDIR/$file" $HOME
       echo $file " RESTORED."
     fi
+    rmdir $BACKUPDIR
+    echo "Removed BACKUPDIR: " $BACKUPDIR
 
   done
 }
 
 function _list_files () 
 {
-  [ -e $IGNOREFILE ] && local ignore_file=`cat $IGNOREFILE | xargs`
-  local ignore_file="$ignore_file README.md .git/ bin/ .dfmshignore .. ."
+  [ -e $IGNOREFILE ] && . $IGNOREFILE
+  IGNORED_FILES="${IGNORED_FILES[*]} README.md .git/ bin/ .dfmshignore .. ."
 
   local files=`ls -a $REPOSITORY | xargs`
   local final_files=""
 
   for file in $files; do
     file=$(basename $file)
-    [[ $ignore_file =~ $file ]] && continue;
+    [[ $IGNORED_FILES =~ $file ]] && continue;
     final_files+=" "$file
   done
-  [ "$final_files" = "" ] && echo "No input files" && exit  
+  [ -z "$final_files" ] && echo "No input files" && exit  
   echo $final_files
 }
 
 find_repository;
 
 case "$1" in
-  install)   _install    ;;
-  uninstall) _uninstall  ;;
-  list)      _list_files ;;
+  --install|-i)   _install    ;;
+  --uninstall|-u) _uninstall  ;;
+  --list|-l)      _list_files ;;
   *) 
-    printf " Dotfiles Manager BASH\n"
-    printf "  - install, install dotfiles \n"
-    printf "  - uninstall, uninstall dotfiles \n"
-    printf "  - list, list dotfiles which will be un/installed \n"
+    echo -e " Dotfiles Manager BASH\n"\
+    "  --install, -i    install dotfiles.\n"\
+    "  --uninstall, -u  uninstall dotfiles.\n"\
+    "  --list, -l       list dotfiles which will be un/installed.\n" 
     ;;
 esac
 # vim: ft=sh
